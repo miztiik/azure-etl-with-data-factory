@@ -1,0 +1,81 @@
+{
+	"name": "SourceDataset_exo",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "store_events",
+				"container": "store-events-blob-001"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"store_id": {
+					"type": "integer"
+				},
+				"store_fqdn": {
+					"type": "string"
+				},
+				"store_ip": {
+					"type": "string"
+				},
+				"cust_id": {
+					"type": "integer"
+				},
+				"category": {
+					"type": "string"
+				},
+				"sku": {
+					"type": "integer"
+				},
+				"price": {
+					"type": "number"
+				},
+				"qty": {
+					"type": "integer"
+				},
+				"discount": {
+					"type": "integer"
+				},
+				"gift_wrap": {
+					"type": "boolean"
+				},
+				"variant": {
+					"type": "string"
+				},
+				"priority_shipping": {
+					"type": "boolean"
+				},
+				"payment_method": {
+					"type": "string"
+				},
+				"ts": {
+					"type": "string"
+				},
+				"contact_me": {
+					"type": "string"
+				},
+				"is_return": {
+					"type": "boolean"
+				},
+				"event_type": {
+					"type": "string"
+				},
+				"dt": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

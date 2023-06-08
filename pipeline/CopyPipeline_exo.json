@@ -1,0 +1,227 @@
+{
+	"name": "CopyPipeline_exo",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_exo",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "store-events-blob-001/store_events/"
+					},
+					{
+						"name": "Destination",
+						"value": "store-events-blob-001//"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*",
+							"enablePartitionDiscovery": true
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AvroSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "AvroWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"validateDataConsistency": true,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['id']"
+								},
+								"sink": {
+									"name": "id"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_id']"
+								},
+								"sink": {
+									"name": "store_id"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_fqdn']"
+								},
+								"sink": {
+									"name": "store_fqdn"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_ip']"
+								},
+								"sink": {
+									"name": "store_ip"
+								}
+							},
+							{
+								"source": {
+									"path": "$['cust_id']"
+								},
+								"sink": {
+									"name": "cust_id"
+								}
+							},
+							{
+								"source": {
+									"path": "$['category']"
+								},
+								"sink": {
+									"name": "category"
+								}
+							},
+							{
+								"source": {
+									"path": "$['sku']"
+								},
+								"sink": {
+									"name": "sku"
+								}
+							},
+							{
+								"source": {
+									"path": "$['price']"
+								},
+								"sink": {
+									"name": "price"
+								}
+							},
+							{
+								"source": {
+									"path": "$['qty']"
+								},
+								"sink": {
+									"name": "qty"
+								}
+							},
+							{
+								"source": {
+									"path": "$['discount']"
+								},
+								"sink": {
+									"name": "discount"
+								}
+							},
+							{
+								"source": {
+									"path": "$['gift_wrap']"
+								},
+								"sink": {
+									"name": "gift_wrap"
+								}
+							},
+							{
+								"source": {
+									"path": "$['variant']"
+								},
+								"sink": {
+									"name": "variant"
+								}
+							},
+							{
+								"source": {
+									"path": "$['priority_shipping']"
+								},
+								"sink": {
+									"name": "priority_shipping"
+								}
+							},
+							{
+								"source": {
+									"path": "$['payment_method']"
+								},
+								"sink": {
+									"name": "payment_method"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ts']"
+								},
+								"sink": {
+									"name": "ts"
+								}
+							},
+							{
+								"source": {
+									"path": "$['contact_me']"
+								},
+								"sink": {
+									"name": "contact_me"
+								}
+							},
+							{
+								"source": {
+									"path": "$['is_return']"
+								},
+								"sink": {
+									"name": "is_return"
+								}
+							},
+							{
+								"source": {
+									"path": "$['event_type']"
+								},
+								"sink": {
+									"name": "event_type"
+								}
+							},
+							{
+								"source": {
+									"path": "$['dt']"
+								},
+								"sink": {
+									"name": "dt"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_exo",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_exo",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-06-07T17:29:58Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

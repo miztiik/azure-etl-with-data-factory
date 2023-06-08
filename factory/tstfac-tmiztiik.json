@@ -1,0 +1,15 @@
+{
+	"name": "tstfac-tmiztiik",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned,UserAssigned",
+		"principalId": "277614f2-32d5-4619-8190-ffa535e6bf3a",
+		"tenantId": "dd75bfd4-42ba-476a-a2d2-60fd44086ac1",
+		"userAssignedIdentities": {
+			"/subscriptions/58379947-56e0-477a-bbe3-8e671aadab83/resourcegroups/Miztiik_Enterprises_ne_etl_001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/uami_etl_001_func": {
+				"clientId": "78711405-8167-4754-8cf0-8591281a3c40",
+				"principalId": "05ff8f1e-553a-4437-a720-8f77d4f809d7"
+			}
+		}
+	}
+}
