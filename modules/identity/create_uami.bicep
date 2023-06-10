@@ -25,8 +25,15 @@ resource r_uami_func 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-3
 }
 
 // @description('Create User-Assigned Managed Identity - For Stream Analytics')
-resource r_uami_stream_analytics 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${_prebaked_uami_name_prefix}_stream_analytics'
+// resource r_uami_stream_analytics 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+//   name: '${_prebaked_uami_name_prefix}_stream_analytics'
+//   location: deploymentParams.location
+//   tags: tags
+// }
+
+@description('Create User-Assigned Managed Identity - For Data Factory')
+resource r_uami_data_factory 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${_prebaked_uami_name_prefix}_data_factory'
   location: deploymentParams.location
   tags: tags
 }
@@ -53,6 +60,7 @@ output module_metadata object = module_metadata
 
 output uami_name_vm string = r_uami_vm.name
 output uami_name_func string = r_uami_func.name
-output uami_name_stream_analytics string = r_uami_stream_analytics.name
+// output uami_name_stream_analytics string = r_uami_stream_analytics.name
+output uami_data_factory string = r_uami_data_factory.name
 // output uami_name_aks string = r_uami_aks.name
 // output uami_name_logic_app string = r_uami_logic_app.name
