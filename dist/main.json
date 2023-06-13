@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.17.1.54307",
-      "templateHash": "12215343026424256825"
+      "templateHash": "14762902786944238630"
     }
   },
   "parameters": {
@@ -1390,7 +1390,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "513042242777559191"
+              "templateHash": "13075082686923061712"
             }
           },
           "parameters": {
@@ -1554,74 +1554,92 @@
                   "location": {
                     "type": "AzureBlobStorageLocation",
                     "container": "[parameters('blobContainerName')]",
-                    "folderPath": "store-events/raw"
+                    "folderPath": "store_events/raw",
+                    "fileName": "*.json"
                   }
                 },
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "store_id": {
-                      "type": "integer"
-                    },
-                    "store_fqdn": {
-                      "type": "string"
-                    },
-                    "store_ip": {
-                      "type": "string"
-                    },
-                    "cust_id": {
-                      "type": "integer"
-                    },
-                    "category": {
-                      "type": "string"
-                    },
-                    "sku": {
-                      "type": "integer"
-                    },
-                    "price": {
-                      "type": "number"
-                    },
-                    "qty": {
-                      "type": "integer"
-                    },
-                    "discount": {
-                      "type": "integer"
-                    },
-                    "gift_wrap": {
-                      "type": "boolean"
-                    },
-                    "variant": {
-                      "type": "string"
-                    },
-                    "priority_shipping": {
-                      "type": "boolean"
-                    },
-                    "payment_method": {
-                      "type": "string"
-                    },
-                    "ts": {
-                      "type": "string"
-                    },
-                    "contact_me": {
-                      "type": "string"
-                    },
-                    "is_return": {
-                      "type": "boolean"
-                    },
-                    "event_type": {
-                      "type": "string"
-                    },
-                    "dt": {
-                      "type": "string"
-                    },
-                    "bad_msg": {
-                      "type": "boolean"
-                    }
+                "schema": [
+                  {
+                    "name": "id",
+                    "type": "string"
+                  },
+                  {
+                    "name": "store_id",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "store_fqdn",
+                    "type": "string"
+                  },
+                  {
+                    "name": "store_ip",
+                    "type": "string"
+                  },
+                  {
+                    "name": "cust_id",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "category",
+                    "type": "string"
+                  },
+                  {
+                    "name": "sku",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "price",
+                    "type": "number"
+                  },
+                  {
+                    "name": "qty",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "discount",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "gift_wrap",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "string"
+                  },
+                  {
+                    "name": "priority_shipping",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "payment_method",
+                    "type": "string"
+                  },
+                  {
+                    "name": "ts",
+                    "type": "string"
+                  },
+                  {
+                    "name": "contact_me",
+                    "type": "string"
+                  },
+                  {
+                    "name": "is_return",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "event_type",
+                    "type": "string"
+                  },
+                  {
+                    "name": "dt",
+                    "type": "string"
+                  },
+                  {
+                    "name": "bad_msg",
+                    "type": "boolean"
                   }
-                }
+                ]
               },
               "dependsOn": [
                 "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
@@ -1637,7 +1655,7 @@
                   "referenceName": "[format('{0}_link_to_sa', variables('data_factory_name'))]",
                   "type": "LinkedServiceReference"
                 },
-                "type": "Binary",
+                "type": "Parquet",
                 "typeProperties": {
                   "location": {
                     "type": "AzureBlobStorageLocation",
@@ -1721,35 +1739,74 @@
                   "sources": [
                     {
                       "dataset": {
-                        "referenceName": "UsageDetailsRawBlob",
+                        "referenceName": "data_set_store_events_in",
                         "type": "DatasetReference"
                       },
-                      "name": "blobData"
+                      "name": "storeEventsRaw",
+                      "description": "Raw Events for all stores"
                     }
                   ],
                   "sinks": [
                     {
                       "dataset": {
-                        "referenceName": "UsageDetailsAggregatedBlob",
+                        "referenceName": "data_set_store_events_out",
                         "type": "DatasetReference"
                       },
-                      "name": "tableData"
+                      "name": "storeEventsProcessed",
+                      "description": "Processed events all stores"
                     }
                   ],
                   "transformations": [
                     {
-                      "name": "aggregatedData"
+                      "name": "notNULLstoreid",
+                      "description": "Removing records without store id"
                     },
                     {
-                      "name": "mappedData",
-                      "description": "Creates an explicit mapping for each drifted column"
+                      "name": "saleRevenue",
+                      "description": "Revenue for that event computed for qty, price and discount"
                     }
                   ],
-                  "script": "source(output(\n\t\tid as string,\n\t\tdate as string,\n\t\tresourceId as string,\n\t\tresourceName as string,\n\t\tlocation as string,\n\t\tmeterId as string,\n\t\tusageQuantity as double,\n\t\tpretaxCost as double,\n\t\tcurrency as string,\n\t\tisEstimated as boolean,\n\t\tsubscriptionGuid as string,\n\t\tresourceTypeName as string,\n\t\tresourceTypeGuid as string,\n\t\tofferId as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\twildcardPaths:['usage-details.json']) ~> blobData\nmappedData aggregate(groupBy(partitionKey,\n\t\tdate),\n\tusageQuantity = sum(usageQuantity),\n\t\tpretaxCost = sum(pretaxCost),\n\t\teach(match(!in(['partitionKey','date','usageQuantity','pretaxCost'],name)), $$ = first($$))) ~> aggregatedData\nblobData derive(id = lower(toString(byName('id'))),\n\t\tdate = toString(byName('date')),\n\t\tresourceId = toString(byName('resourceId')),\n\t\tresourceName = lower(toString(byName('resourceName'))),\n\t\tlocation = toString(byName('location')),\n\t\tmeterId = lower(toString(byName('meterId'))),\n\t\tusageQuantity = toDouble(byName('usageQuantity')),\n\t\tpretaxCost = toDouble(byName('pretaxCost')),\n\t\tcurrency = toString(byName('currency')),\n\t\tisEstimated = toBoolean(byName('isEstimated')),\n\t\tsubscriptionGuid = lower(toString(byName('subscriptionGuid'))),\n\t\tresourceTypeName = toString(byName('resourceTypeName')),\n\t\tresourceTypeGuid = lower(toString(byName('resourceTypeGuid'))),\n\t\tofferId = toString(byName('offerId')),\n\t\tresourceGroupName = lower(regexExtract(byName('resourceId'), '\\\\/(?i)resourceGroups\\\\/(.*?)\\\\/', 1)),\n\t\tpartitionKey = lower(concat(byName('resourceName'), ':', byName('meterId')))) ~> mappedData\naggregatedData sink(input(\n\t\tpartitionKey as string,\n\t\tdate as string,\n\t\tusageQuantity as string,\n\t\tpretaxCost as string,\n\t\tid as string,\n\t\tresourceId as string,\n\t\tresourceName as string,\n\t\tlocation as string,\n\t\tmeterId as string,\n\t\tcurrency as string,\n\t\tisEstimated as string,\n\t\tsubscriptionGuid as string,\n\t\tresourceTypeName as string,\n\t\tresourceTypeGuid as string,\n\t\tofferId as string,\n\t\tresourceGroupName as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tpartitionFileNames:['usage-details.csv'],\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> tableData"
+                  "scriptLines": [
+                    "source(output(",
+                    "\t\tid as string,",
+                    "\t\tstore_id as integer,",
+                    "\t\tstore_fqdn as string,",
+                    "\t\tstore_ip as string,",
+                    "\t\tcust_id as integer,",
+                    "\t\tcategory as string,",
+                    "\t\tsku as integer,",
+                    "\t\tprice as double,",
+                    "\t\tqty as integer,",
+                    "\t\tdiscount as integer,",
+                    "\t\tgift_wrap as boolean,",
+                    "\t\tvariant as string,",
+                    "\t\tpriority_shipping as boolean,",
+                    "\t\tpayment_method as string,",
+                    "\t\tts as string,",
+                    "\t\tcontact_me as string,",
+                    "\t\tis_return as boolean,",
+                    "\t\tevent_type as string,",
+                    "\t\tdt as string,",
+                    "\t\tbad_msg as boolean",
+                    "\t),",
+                    "\tallowSchemaDrift: true,",
+                    "\tvalidateSchema: false,",
+                    "\tignoreNoFilesFound: false,",
+                    "\tdocumentForm: 'singleDocument') ~> stagedData",
+                    "stagedData filter(!isNull(store_id)) ~> notNULLstoreid",
+                    "notNULLstoreid derive(sale_revenue = qty*price*(discount/100)) ~> saleRevenue",
+                    "saleRevenue sink(allowSchemaDrift: true,",
+                    "\tvalidateSchema: false,",
+                    "\tformat: 'parquet',",
+                    "\tskipDuplicateMapInputs: true,",
+                    "\tskipDuplicateMapOutputs: true) ~> storeEventsProcessed"
+                  ]
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]"
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/datasets', variables('data_factory_name'), 'data_set_store_events_in')]",
+                "[resourceId('Microsoft.DataFactory/factories/datasets', variables('data_factory_name'), 'data_set_store_events_out')]"
               ]
             },
             {

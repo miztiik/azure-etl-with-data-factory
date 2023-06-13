@@ -83,75 +83,32 @@ resource r_data_factory_data_set_in 'Microsoft.DataFactory/factories/datasets@20
       location: {
         type: 'AzureBlobStorageLocation'
         container: blobContainerName
-        folderPath: 'store-events/raw'
-        // fileName: '*.json'
+        folderPath: 'store_events/raw'
+        fileName: '*.json'
       }
     }
-    schema: {
-      type: 'object'
-      properties: {
-        id: {
-          type: 'string'
-      }
-      store_id: {
-          type: 'integer'
-      }
-      store_fqdn: {
-          type: 'string'
-      }
-      store_ip: {
-          type: 'string'
-      }
-      cust_id: {
-          type: 'integer'
-      }
-      category: {
-          type: 'string'
-      }
-      sku: {
-          type: 'integer'
-      }
-      price: {
-          type: 'number'
-      }
-      qty: {
-          type: 'integer'
-      }
-      discount: {
-          type: 'integer'
-      }
-      gift_wrap: {
-          type: 'boolean'
-      }
-      variant: {
-          type: 'string'
-      }
-      priority_shipping: {
-          type: 'boolean'
-      }
-      payment_method: {
-          type: 'string'
-      }
-      ts: {
-          type: 'string'
-      }
-      contact_me: {
-          type: 'string'
-      }
-      is_return: {
-          type: 'boolean'
-      }
-      event_type: {
-          type: 'string'
-      }
-      dt: {
-          type: 'string'
-      }
-      bad_msg: {
-          type: 'boolean'
-      }
-      }
-    }
+    schema: [
+      { name: 'id', type: 'string' }
+      { name: 'store_id', type: 'integer' }
+      { name: 'store_fqdn', type: 'string' }
+      { name: 'store_ip', type: 'string' }
+      { name: 'cust_id', type: 'integer' }
+      { name: 'category', type: 'string' }
+      { name: 'sku', type: 'integer' }
+      { name: 'price', type: 'number' }
+      { name: 'qty', type: 'integer' }
+      { name: 'discount', type: 'integer' }
+      { name: 'gift_wrap', type: 'boolean' }
+      { name: 'variant', type: 'string' }
+      { name: 'priority_shipping', type: 'boolean' }
+      { name: 'payment_method', type: 'string' }
+      { name: 'ts', type: 'string' }
+      { name: 'contact_me', type: 'string' }
+      { name: 'is_return', type: 'boolean' }
+      { name: 'event_type', type: 'string' }
+      { name: 'dt', type: 'string' }
+      { name: 'bad_msg', type: 'boolean' }
+    ]
   }
 }
 
@@ -163,7 +120,8 @@ resource r_data_factory_data_set_out 'Microsoft.DataFactory/factories/datasets@2
       referenceName: r_data_factory_link_to_sa.name
       type: 'LinkedServiceReference'
     }
-    type: 'Binary'
+    // type: 'Binary'
+    type: 'Parquet'
     typeProperties: {
       location: {
         type: 'AzureBlobStorageLocation'
@@ -267,31 +225,69 @@ resource dataFactoryDataflowAggregateUsageDetailsRes 'Microsoft.DataFactory/fact
       sources: [
         {
           dataset: {
-            referenceName: 'UsageDetailsRawBlob'
+            referenceName: r_data_factory_data_set_in.name
             type: 'DatasetReference'
           }
-          name: 'blobData'
+          name: 'storeEventsRaw'
+          description: 'Raw Events for all stores'
         }
       ]
       sinks: [
         {
           dataset: {
-            referenceName: 'UsageDetailsAggregatedBlob'
+            referenceName: r_data_factory_data_set_out.name
             type: 'DatasetReference'
           }
-          name: 'tableData'
+          name: 'storeEventsProcessed'
+          description: 'Processed events all stores'
         }
       ]
       transformations: [
         {
-          name: 'aggregatedData'
+          name: 'notNULLstoreid'
+          description: 'Removing records without store id'
         }
         {
-          name: 'mappedData'
-          description: 'Creates an explicit mapping for each drifted column'
+          name: 'saleRevenue'
+          description: 'Revenue for that event computed for qty, price and discount'
         }
       ]
-      script: 'source(output(\n\t\tid as string,\n\t\tdate as string,\n\t\tresourceId as string,\n\t\tresourceName as string,\n\t\tlocation as string,\n\t\tmeterId as string,\n\t\tusageQuantity as double,\n\t\tpretaxCost as double,\n\t\tcurrency as string,\n\t\tisEstimated as boolean,\n\t\tsubscriptionGuid as string,\n\t\tresourceTypeName as string,\n\t\tresourceTypeGuid as string,\n\t\tofferId as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\twildcardPaths:[\'usage-details.json\']) ~> blobData\nmappedData aggregate(groupBy(partitionKey,\n\t\tdate),\n\tusageQuantity = sum(usageQuantity),\n\t\tpretaxCost = sum(pretaxCost),\n\t\teach(match(!in([\'partitionKey\',\'date\',\'usageQuantity\',\'pretaxCost\'],name)), $$ = first($$))) ~> aggregatedData\nblobData derive(id = lower(toString(byName(\'id\'))),\n\t\tdate = toString(byName(\'date\')),\n\t\tresourceId = toString(byName(\'resourceId\')),\n\t\tresourceName = lower(toString(byName(\'resourceName\'))),\n\t\tlocation = toString(byName(\'location\')),\n\t\tmeterId = lower(toString(byName(\'meterId\'))),\n\t\tusageQuantity = toDouble(byName(\'usageQuantity\')),\n\t\tpretaxCost = toDouble(byName(\'pretaxCost\')),\n\t\tcurrency = toString(byName(\'currency\')),\n\t\tisEstimated = toBoolean(byName(\'isEstimated\')),\n\t\tsubscriptionGuid = lower(toString(byName(\'subscriptionGuid\'))),\n\t\tresourceTypeName = toString(byName(\'resourceTypeName\')),\n\t\tresourceTypeGuid = lower(toString(byName(\'resourceTypeGuid\'))),\n\t\tofferId = toString(byName(\'offerId\')),\n\t\tresourceGroupName = lower(regexExtract(byName(\'resourceId\'), \'\\\\/(?i)resourceGroups\\\\/(.*?)\\\\/\', 1)),\n\t\tpartitionKey = lower(concat(byName(\'resourceName\'), \':\', byName(\'meterId\')))) ~> mappedData\naggregatedData sink(input(\n\t\tpartitionKey as string,\n\t\tdate as string,\n\t\tusageQuantity as string,\n\t\tpretaxCost as string,\n\t\tid as string,\n\t\tresourceId as string,\n\t\tresourceName as string,\n\t\tlocation as string,\n\t\tmeterId as string,\n\t\tcurrency as string,\n\t\tisEstimated as string,\n\t\tsubscriptionGuid as string,\n\t\tresourceTypeName as string,\n\t\tresourceTypeGuid as string,\n\t\tofferId as string,\n\t\tresourceGroupName as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tpartitionFileNames:[\'usage-details.csv\'],\n\tpartitionBy(\'hash\', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> tableData'
+      scriptLines: [
+        'source(output('
+        '		id as string,'
+        '		store_id as integer,'
+        '		store_fqdn as string,'
+        '		store_ip as string,'
+        '		cust_id as integer,'
+        '		category as string,'
+        '		sku as integer,'
+        '		price as double,'
+        '		qty as integer,'
+        '		discount as integer,'
+        '		gift_wrap as boolean,'
+        '		variant as string,'
+        '		priority_shipping as boolean,'
+        '		payment_method as string,'
+        '		ts as string,'
+        '		contact_me as string,'
+        '		is_return as boolean,'
+        '		event_type as string,'
+        '		dt as string,'
+        '		bad_msg as boolean'
+        '	),'
+        '	allowSchemaDrift: true,'
+        '	validateSchema: false,'
+        '	ignoreNoFilesFound: false,'
+        '	documentForm: \'singleDocument\') ~> stagedData'
+        'stagedData filter(!isNull(store_id)) ~> notNULLstoreid'
+        'notNULLstoreid derive(sale_revenue = qty*price*(discount/100)) ~> saleRevenue'
+        'saleRevenue sink(allowSchemaDrift: true,'
+        '	validateSchema: false,'
+        '	format: \'parquet\','
+        '	skipDuplicateMapInputs: true,'
+        '	skipDuplicateMapOutputs: true) ~> storeEventsProcessed'
+      ]
+      // script: 'source(output(\n\t\tid as string,\n\t\tdate as string,\n\t\tresourceId as string,\n\t\tresourceName as string,\n\t\tlocation as string,\n\t\tmeterId as string,\n\t\tusageQuantity as double,\n\t\tpretaxCost as double,\n\t\tcurrency as string,\n\t\tisEstimated as boolean,\n\t\tsubscriptionGuid as string,\n\t\tresourceTypeName as string,\n\t\tresourceTypeGuid as string,\n\t\tofferId as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\twildcardPaths:[\'usage-details.json\']) ~> blobData\nmappedData aggregate(groupBy(partitionKey,\n\t\tdate),\n\tusageQuantity = sum(usageQuantity),\n\t\tpretaxCost = sum(pretaxCost),\n\t\teach(match(!in([\'partitionKey\',\'date\',\'usageQuantity\',\'pretaxCost\'],name)), $$ = first($$))) ~> aggregatedData\nblobData derive(id = lower(toString(byName(\'id\'))),\n\t\tdate = toString(byName(\'date\')),\n\t\tresourceId = toString(byName(\'resourceId\')),\n\t\tresourceName = lower(toString(byName(\'resourceName\'))),\n\t\tlocation = toString(byName(\'location\')),\n\t\tmeterId = lower(toString(byName(\'meterId\'))),\n\t\tusageQuantity = toDouble(byName(\'usageQuantity\')),\n\t\tpretaxCost = toDouble(byName(\'pretaxCost\')),\n\t\tcurrency = toString(byName(\'currency\')),\n\t\tisEstimated = toBoolean(byName(\'isEstimated\')),\n\t\tsubscriptionGuid = lower(toString(byName(\'subscriptionGuid\'))),\n\t\tresourceTypeName = toString(byName(\'resourceTypeName\')),\n\t\tresourceTypeGuid = lower(toString(byName(\'resourceTypeGuid\'))),\n\t\tofferId = toString(byName(\'offerId\')),\n\t\tresourceGroupName = lower(regexExtract(byName(\'resourceId\'), \'\\\\/(?i)resourceGroups\\\\/(.*?)\\\\/\', 1)),\n\t\tpartitionKey = lower(concat(byName(\'resourceName\'), \':\', byName(\'meterId\')))) ~> mappedData\naggregatedData sink(input(\n\t\tpartitionKey as string,\n\t\tdate as string,\n\t\tusageQuantity as string,\n\t\tpretaxCost as string,\n\t\tid as string,\n\t\tresourceId as string,\n\t\tresourceName as string,\n\t\tlocation as string,\n\t\tmeterId as string,\n\t\tcurrency as string,\n\t\tisEstimated as string,\n\t\tsubscriptionGuid as string,\n\t\tresourceTypeName as string,\n\t\tresourceTypeGuid as string,\n\t\tofferId as string,\n\t\tresourceGroupName as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tpartitionFileNames:[\'usage-details.csv\'],\n\tpartitionBy(\'hash\', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> tableData'
     }
   }
 }
