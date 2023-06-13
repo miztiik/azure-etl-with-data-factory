@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.17.1.54307",
-      "templateHash": "10504382209425046272"
+      "templateHash": "14762902786944238630"
     }
   },
   "parameters": {
@@ -28,6 +28,9 @@
       "type": "object"
     },
     "cosmosDbParams": {
+      "type": "object"
+    },
+    "data_factory_params": {
       "type": "object"
     },
     "brandTags": {
@@ -70,7 +73,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "1142608393314223723"
+              "templateHash": "17102384320675255090"
             }
           },
           "parameters": {
@@ -118,9 +121,12 @@
             {
               "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
               "apiVersion": "2023-01-31",
-              "name": "[format('{0}_stream_analytics', variables('_prebaked_uami_name_prefix'))]",
+              "name": "[format('{0}_data_factory', variables('_prebaked_uami_name_prefix'))]",
               "location": "[parameters('deploymentParams').location]",
-              "tags": "[parameters('tags')]"
+              "tags": "[parameters('tags')]",
+              "metadata": {
+                "description": "Create User-Assigned Managed Identity - For Data Factory"
+              }
             }
           ],
           "outputs": {
@@ -136,9 +142,9 @@
               "type": "string",
               "value": "[format('{0}_func', variables('_prebaked_uami_name_prefix'))]"
             },
-            "uami_name_stream_analytics": {
+            "uami_data_factory": {
               "type": "string",
-              "value": "[format('{0}_stream_analytics', variables('_prebaked_uami_name_prefix'))]"
+              "value": "[format('{0}_data_factory', variables('_prebaked_uami_name_prefix'))]"
             }
           }
         }
@@ -1341,6 +1347,552 @@
           }
         }
       }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}_{1}_{2}_data_factory', parameters('data_factory_params').name_prefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness)]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "deploymentParams": {
+            "value": "[parameters('deploymentParams')]"
+          },
+          "data_factory_params": {
+            "value": "[parameters('data_factory_params')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "uami_data_factory": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_uami', parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.uami_data_factory.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_la', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.logAnalyticsPayGWorkspaceId.value]"
+          },
+          "saName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
+          },
+          "blobContainerName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.blobContainerName.value]"
+          },
+          "cosmos_db_accnt_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmos_db_accnt_name.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.17.1.54307",
+              "templateHash": "13075082686923061712"
+            }
+          },
+          "parameters": {
+            "module_metadata": {
+              "type": "object",
+              "defaultValue": {
+                "module_last_updated": "2023-05-23",
+                "owner": "miztiik@github"
+              }
+            },
+            "deploymentParams": {
+              "type": "object"
+            },
+            "data_factory_params": {
+              "type": "object"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string"
+            },
+            "uami_data_factory": {
+              "type": "string"
+            },
+            "saName": {
+              "type": "string"
+            },
+            "blobContainerName": {
+              "type": "string"
+            },
+            "cosmos_db_accnt_name": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "data_factory_name": "[replace(format('{0}-{1}-data-factory-{2}-{3}', parameters('data_factory_params').name_prefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness), '_', '-')]",
+            "cosmosDbDataContributor_RoleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmos_db_accnt_name'), '00000000-0000-0000-0000-000000000002')]",
+            "builtInRoleNames": [
+              {
+                "name": "Owner",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]"
+              },
+              {
+                "name": "Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+              },
+              {
+                "name": "Reader",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+              },
+              {
+                "name": "Storage Blob Data Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+              },
+              {
+                "name": "Azure Service Bus Data Owner",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '090c5cfd-751d-490a-894a-3ce6f1109419')]"
+              },
+              {
+                "name": "Azure Sentinel Automation Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'f4c81013-99ee-4d62-a7ee-b3f1f648599a')]"
+              },
+              {
+                "name": "Log Analytics Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '92aaf0da-9dab-42b6-94a3-d43ce8d16293')]"
+              },
+              {
+                "name": "Data Factory Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '673868aa-7521-48a0-acc6-0f60742d39f5')]"
+              },
+              {
+                "name": "Logic App Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '87a39d53-fc1b-424a-814c-f7e04687dc9e')]"
+              },
+              {
+                "name": "Logic App Operator",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '515c2055-d9d4-4321-b1b9-bd0c9a0f79fe')]"
+              },
+              {
+                "name": "Managed Application Contributor Role",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '641177b8-a67a-45b9-a033-47bc880bb21e')]"
+              },
+              {
+                "name": "Managed Application Operator Role",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'c7393b34-138c-406f-901b-d8cf2b17e6ae')]"
+              },
+              {
+                "name": "Managed Applications Reader",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b9331d33-8a36-4f8c-b097-4f54124fdb44')]"
+              },
+              {
+                "name": "Monitoring Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '749f88d5-cbae-40b8-bcfc-e573ddc772fa')]"
+              },
+              {
+                "name": "Monitoring Metrics Publisher",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')]"
+              },
+              {
+                "name": "Monitoring Reader",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '43d0d8ad-25c7-4714-9337-8ba259a9fe05')]"
+              },
+              {
+                "name": "Resource Policy Contributor",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '36243c78-bf99-498c-9df9-86d9f8d28608')]"
+              },
+              {
+                "name": "User Access Administrator",
+                "id": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9')]"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DataFactory/factories",
+              "apiVersion": "2018-06-01",
+              "name": "[variables('data_factory_name')]",
+              "tags": "[parameters('tags')]",
+              "location": "[parameters('deploymentParams').location]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uami_data_factory')))]": {}
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/linkedservices",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', variables('data_factory_name'), format('{0}_link_to_sa', variables('data_factory_name')))]",
+              "properties": {
+                "type": "AzureBlobStorage",
+                "description": "Miztiik Link to Azure Storage Account",
+                "typeProperties": {
+                  "serviceEndpoint": "[format('https://{0}.blob.{1}', parameters('saName'), environment().suffixes.storage)]",
+                  "azureCloudType": "AzurePublic",
+                  "accountKind": "StorageV2",
+                  "credential": {
+                    "referenceName": "[parameters('uami_data_factory')]",
+                    "type": "CredentialReference"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/credentials', variables('data_factory_name'), parameters('uami_data_factory'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/datasets",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', variables('data_factory_name'), 'data_set_store_events_in')]",
+              "properties": {
+                "linkedServiceName": {
+                  "referenceName": "[format('{0}_link_to_sa', variables('data_factory_name'))]",
+                  "type": "LinkedServiceReference"
+                },
+                "type": "Json",
+                "typeProperties": {
+                  "location": {
+                    "type": "AzureBlobStorageLocation",
+                    "container": "[parameters('blobContainerName')]",
+                    "folderPath": "store_events/raw",
+                    "fileName": "*.json"
+                  }
+                },
+                "schema": [
+                  {
+                    "name": "id",
+                    "type": "string"
+                  },
+                  {
+                    "name": "store_id",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "store_fqdn",
+                    "type": "string"
+                  },
+                  {
+                    "name": "store_ip",
+                    "type": "string"
+                  },
+                  {
+                    "name": "cust_id",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "category",
+                    "type": "string"
+                  },
+                  {
+                    "name": "sku",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "price",
+                    "type": "number"
+                  },
+                  {
+                    "name": "qty",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "discount",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "gift_wrap",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "variant",
+                    "type": "string"
+                  },
+                  {
+                    "name": "priority_shipping",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "payment_method",
+                    "type": "string"
+                  },
+                  {
+                    "name": "ts",
+                    "type": "string"
+                  },
+                  {
+                    "name": "contact_me",
+                    "type": "string"
+                  },
+                  {
+                    "name": "is_return",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "event_type",
+                    "type": "string"
+                  },
+                  {
+                    "name": "dt",
+                    "type": "string"
+                  },
+                  {
+                    "name": "bad_msg",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/linkedservices', variables('data_factory_name'), format('{0}_link_to_sa', variables('data_factory_name')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/datasets",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', variables('data_factory_name'), 'data_set_store_events_out')]",
+              "properties": {
+                "linkedServiceName": {
+                  "referenceName": "[format('{0}_link_to_sa', variables('data_factory_name'))]",
+                  "type": "LinkedServiceReference"
+                },
+                "type": "Parquet",
+                "typeProperties": {
+                  "location": {
+                    "type": "AzureBlobStorageLocation",
+                    "container": "[parameters('blobContainerName')]",
+                    "folderPath": "output"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/linkedservices', variables('data_factory_name'), format('{0}_link_to_sa', variables('data_factory_name')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/pipelines",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', variables('data_factory_name'), format('{0}-pipeline', variables('data_factory_name')))]",
+              "properties": {
+                "activities": [
+                  {
+                    "name": "MiztiikDataProcessorActivity",
+                    "type": "Copy",
+                    "typeProperties": {
+                      "source": {
+                        "type": "BinarySource",
+                        "storeSettings": {
+                          "type": "AzureBlobStorageReadSettings",
+                          "recursive": true
+                        }
+                      },
+                      "sink": {
+                        "type": "BinarySink",
+                        "storeSettings": {
+                          "type": "AzureBlobStorageWriteSettings"
+                        }
+                      },
+                      "enableStaging": false
+                    },
+                    "inputs": [
+                      {
+                        "referenceName": "data_set_store_events_in",
+                        "type": "DatasetReference"
+                      }
+                    ],
+                    "outputs": [
+                      {
+                        "referenceName": "data_set_store_events_out",
+                        "type": "DatasetReference"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/datasets', variables('data_factory_name'), 'data_set_store_events_in')]",
+                "[resourceId('Microsoft.DataFactory/factories/datasets', variables('data_factory_name'), 'data_set_store_events_out')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/credentials",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', variables('data_factory_name'), parameters('uami_data_factory'))]",
+              "properties": {
+                "type": "ManagedIdentity",
+                "typeProperties": {
+                  "resourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uami_data_factory'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DataFactory/factories/dataflows",
+              "apiVersion": "2018-06-01",
+              "name": "[format('{0}/{1}', variables('data_factory_name'), 'DailyStoreAggregatesSales')]",
+              "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                  "sources": [
+                    {
+                      "dataset": {
+                        "referenceName": "data_set_store_events_in",
+                        "type": "DatasetReference"
+                      },
+                      "name": "storeEventsRaw",
+                      "description": "Raw Events for all stores"
+                    }
+                  ],
+                  "sinks": [
+                    {
+                      "dataset": {
+                        "referenceName": "data_set_store_events_out",
+                        "type": "DatasetReference"
+                      },
+                      "name": "storeEventsProcessed",
+                      "description": "Processed events all stores"
+                    }
+                  ],
+                  "transformations": [
+                    {
+                      "name": "notNULLstoreid",
+                      "description": "Removing records without store id"
+                    },
+                    {
+                      "name": "saleRevenue",
+                      "description": "Revenue for that event computed for qty, price and discount"
+                    }
+                  ],
+                  "scriptLines": [
+                    "source(output(",
+                    "\t\tid as string,",
+                    "\t\tstore_id as integer,",
+                    "\t\tstore_fqdn as string,",
+                    "\t\tstore_ip as string,",
+                    "\t\tcust_id as integer,",
+                    "\t\tcategory as string,",
+                    "\t\tsku as integer,",
+                    "\t\tprice as double,",
+                    "\t\tqty as integer,",
+                    "\t\tdiscount as integer,",
+                    "\t\tgift_wrap as boolean,",
+                    "\t\tvariant as string,",
+                    "\t\tpriority_shipping as boolean,",
+                    "\t\tpayment_method as string,",
+                    "\t\tts as string,",
+                    "\t\tcontact_me as string,",
+                    "\t\tis_return as boolean,",
+                    "\t\tevent_type as string,",
+                    "\t\tdt as string,",
+                    "\t\tbad_msg as boolean",
+                    "\t),",
+                    "\tallowSchemaDrift: true,",
+                    "\tvalidateSchema: false,",
+                    "\tignoreNoFilesFound: false,",
+                    "\tdocumentForm: 'singleDocument') ~> stagedData",
+                    "stagedData filter(!isNull(store_id)) ~> notNULLstoreid",
+                    "notNULLstoreid derive(sale_revenue = qty*price*(discount/100)) ~> saleRevenue",
+                    "saleRevenue sink(allowSchemaDrift: true,",
+                    "\tvalidateSchema: false,",
+                    "\tformat: 'parquet',",
+                    "\tskipDuplicateMapInputs: true,",
+                    "\tskipDuplicateMapOutputs: true) ~> storeEventsProcessed"
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]",
+                "[resourceId('Microsoft.DataFactory/factories/datasets', variables('data_factory_name'), 'data_set_store_events_in')]",
+                "[resourceId('Microsoft.DataFactory/factories/datasets', variables('data_factory_name'), 'data_set_store_events_out')]"
+              ]
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+              "apiVersion": "2021-04-15",
+              "name": "[format('{0}/{1}', parameters('cosmos_db_accnt_name'), guid(resourceId('Microsoft.DataFactory/factories', variables('data_factory_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')), variables('cosmosDbDataContributor_RoleDefinitionId'), resourceId('Microsoft.Storage/storageAccounts', parameters('saName'))))]",
+              "properties": {
+                "roleDefinitionId": "[variables('cosmosDbDataContributor_RoleDefinitionId')]",
+                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uami_data_factory')), '2023-01-31').principalId]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]"
+              ],
+              "metadata": {
+                "description": "Assign the Cosmos Data Plane Owner role to the user-assigned managed identity"
+              }
+            },
+            {
+              "copy": {
+                "name": "roleAssignment",
+                "count": "[length(variables('builtInRoleNames'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[guid(resourceId('Microsoft.DataFactory/factories', variables('data_factory_name')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uami_data_factory')), variables('builtInRoleNames')[copyIndex()].name)]",
+              "properties": {
+                "roleDefinitionId": "[variables('builtInRoleNames')[copyIndex()].id]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('uami_data_factory')), '2023-01-31').principalId]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]"
+              ],
+              "metadata": {
+                "description": "Assign the Permissions to Role"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.DataFactory/factories/{0}', variables('data_factory_name'))]",
+              "name": "[format('{0}_diag', variables('data_factory_name'))]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "categoryGroup": "allLogs",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "days": 90,
+                      "enabled": true
+                    }
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "timeGrain": "PT5M",
+                    "enabled": true,
+                    "retentionPolicy": {
+                      "enabled": false,
+                      "days": 0
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DataFactory/factories', variables('data_factory_name'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "module_metadata": {
+              "type": "object",
+              "value": "[parameters('module_metadata')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_la', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_{2}_uami', parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').loc_short_code, parameters('deploymentParams').global_uniqueness))]"
+      ]
     }
   ]
 }

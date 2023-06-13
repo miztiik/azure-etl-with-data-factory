@@ -13,6 +13,8 @@ param funcParams object
 param serviceBusParams object
 param cosmosDbParams object
 
+param data_factory_params object
+
 param brandTags object
 
 param dateNow string = utcNow('yyyy-MM-dd-hh-mm')
@@ -123,3 +125,21 @@ module r_svc_bus 'modules/integration/create_svc_bus.bicep' = {
   }
 }
 
+// Create the Data Factory
+module r_data_factory 'modules/integration/create_data_factory.bicep' = {
+  name: '${data_factory_params.name_prefix}_${deploymentParams.loc_short_code}_${deploymentParams.global_uniqueness}_data_factory'
+  params: {
+    deploymentParams:deploymentParams
+    data_factory_params:data_factory_params
+    tags: tags
+
+    uami_data_factory: r_uami.outputs.uami_data_factory
+
+    logAnalyticsWorkspaceId: r_logAnalyticsWorkspace.outputs.logAnalyticsPayGWorkspaceId
+
+    saName: r_sa.outputs.saName
+    blobContainerName: r_blob.outputs.blobContainerName
+
+    cosmos_db_accnt_name: r_cosmosdb.outputs.cosmos_db_accnt_name
+  }
+}

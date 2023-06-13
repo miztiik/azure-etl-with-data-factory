@@ -6,7 +6,7 @@
       "value": {
         "location": "northeurope",
         "loc_short_code":"ne",
-        "global_uniqueness": "001",
+        "global_uniqueness": "008",
         "enterprise_name": "Miztiik_Enterprises",
         "enterprise_name_suffix": "etl",
         "sub_deploymnet_prefix": "Miztiik_Verse"
@@ -64,6 +64,11 @@
         "storeEventsCustomTableName": "storeEvents",
         "automationEventsCustomTableName": "miztiikAutomationEvents",
         "managedRunCmdCustomTableName": "miztiikRunCmdEvents"      }
+    },
+    "data_factory_params" :{
+      "value": {
+        "name_prefix": "etl"
+      }
     },
     "brandTags": {
       "value": {
